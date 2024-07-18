@@ -126,8 +126,6 @@ func Start(conf Configuration, ctx context.Context, wg *sync.WaitGroup) {
 				// ipAddr := addrInUdp.AddrPort().Addr()
 				port := addrInUdp.Port
 
-				//log.Println("Incoming addr: ", "udpaddr, ", addrInUdp, " netip addr: ", ipAddr)
-
 				if rlen < MIN_STUN_LEN {
 					continue
 				}
@@ -139,7 +137,6 @@ func Start(conf Configuration, ctx context.Context, wg *sync.WaitGroup) {
 				if nil != err {
 					log.Println(err)
 				}			
-
 
 				var res SuccessBindingResponse
 				res.BindRequest = req

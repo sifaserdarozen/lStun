@@ -1,7 +1,7 @@
 
 # Stun
 
-Implements a lightweight Session Traversal Utilities for NAT (STUN) server
+PoC for a lightweight Session Traversal Utilities for NAT (STUN) server implementation
 
 ### RFCs
 - **RFC 3489**: [STUN - Simple Traversal of User Datagram Protocol (UDP) Through Network Address Translators (NATs)][rfc3489]
