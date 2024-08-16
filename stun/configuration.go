@@ -8,18 +8,21 @@ import (
 // default values
 const (
 	UDP_PORT = 3478
+	TCP_PORT = 3478
 )
 
 type Configuration struct {
 	udpPort int
+	tcpPort int
 }
 
 func (self Configuration) String() string {
-	return fmt.Sprintf("Udp Port = %d", self.udpPort)
+	return fmt.Sprintf("{Udp Port: %d, Tcp Port: %d}", self.udpPort, self.tcpPort)
 }
 
 func GetConfiguration() Configuration {
-	udpPort := flag.Int("udpPort", UDP_PORT, "Stun server udp listening port")
+	udpPort := flag.Int("udpPort", UDP_PORT, "Stun server udp port")
+	tcpPort := flag.Int("tcpPort", TCP_PORT, "Stun server tcp port")
 
 	flag.Parse()
 
@@ -29,5 +32,6 @@ func GetConfiguration() Configuration {
 
 	return Configuration{
 		udpPort: *udpPort,
+		tcpPort: *tcpPort,
 	}
 }
