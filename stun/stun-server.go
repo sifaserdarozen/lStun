@@ -25,6 +25,10 @@ const (
 	IPV4_ATTR                = 1         // 0x0001
 )
 
+const (
+	NEW_CONN_BUFF_SIZE = 1000
+)
+
 type BindRequest struct {
 	Type   uint16
 	Len    uint16
@@ -94,7 +98,7 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 		defer (*wg).Done()
 
 		tcpWg := &sync.WaitGroup{}
-		newConns := make(chan net.Conn)
+		newConns := make(chan net.Conn, NEW_CONN_BUFF_SIZE)
 
 		log.Printf("Starting Stun server, listening port at %d/tcp", conf.tcpPort)
 		listenTcpUrl := fmt.Sprintf(":%d", conf.tcpPort)
@@ -111,13 +115,14 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 			defer (*wg).Done()
 			for {
 				c, err := l.Accept()
+				log.Printf("... new connection")
 				if err != nil {
+					log.Printf("Tcp listen error: %s", err)
 					// handle error (and then for example indicate acceptor is down)
 					newConns <- nil
 					return
 				}
 
-				log.Printf("A new connection request")
 				newConns <- c
 			}
 		}(tcpServer, newConns, tcpWg)
@@ -127,6 +132,7 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 			select {
 			case <-ctx.Done():
 				log.Println("Stopping tcp server ...")
+				tcpServer.Close()
 				break loop
 			case conn := <-newConns:
 				if nil == conn {
@@ -138,10 +144,6 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 				tcpWg.Add(1)
 				go func(tcpConn net.Conn, wg *sync.WaitGroup) {
 					defer (*wg).Done()
-
-					log.Printf("Start processing the new connection.................")
-
-					// --------------------------------------------------------------------------------
 
 					buf := make([]byte, 10000)
 					err := tcpConn.SetReadDeadline(time.Now().Add(1 * time.Second))
@@ -199,13 +201,13 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 					// Shut down the connection.
 					tcpConn.Close()
 
-					log.Printf("Start processing the new connection ................ Done")
 				}(conn, tcpWg)
 			}
 		}
 
 		log.Printf("Waiting tcp connections to drain")
 		tcpWg.Wait()
+		close(newConns)
 		log.Printf("Tcp connections... drained")
 	}()
 }
