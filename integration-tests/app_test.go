@@ -186,17 +186,9 @@ func TestWithPion(t *testing.T) {
 				if expectedMappedIp != mappedAddr.IP.String() {
 					t.Errorf("expected ip = %s != %s = mapped ip", expectedMappedIp, mappedAddr)
 				}
-
-				t.Logf("******** succeed : %s", test.proto)
-
 			}); err != nil {
 				t.Errorf("Error in stun request %s", err)
 			}
-			t.Logf("******** YES SUCCEEED : %s", test.proto)
-			t.Logf("did we failed: %t", t.Failed())
-
 		})
-		t.Logf("******** ALL DONE : %s", test.proto)
 	}
-	t.Logf("******** EXITING test with pion")
 }
