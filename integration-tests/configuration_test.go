@@ -17,12 +17,16 @@ import (
 func TestConfiguration(t *testing.T) {
 
 	testCases := map[string]struct {
-		proto       string
-		dnsResolver func(string, string) (string, string, error)
+		port string
+		cmd  []string
 	}{
-		"default should provide udp service at 3478": {
-			proto:       udpProto,
-			dnsResolver: udpResolver,
+		"default should provide udp service at standard stun port 3478": {
+			port: stunPort,
+			cmd:  []string{"./stun"},
+		},
+		"cli flags should override all and provide udp service at 6666": {
+			port: "6666",
+			cmd:  []string{"./stun", "--udpPort", "6666"},
 		},
 	}
 
@@ -34,13 +38,13 @@ func TestConfiguration(t *testing.T) {
 			var logConsumer LogConsumer
 
 			// docker run -p 127.0.0.1::3478/udp stun:latest
-			exposedPort, err := nat.NewPort(test.proto, stunPort)
+			exposedPort, err := nat.NewPort(udpProto, test.port)
 			if err != nil {
 				t.Error(err)
 			}
 			exposedPortRequest := fmt.Sprintf("127.0.0.1::%s/%s", exposedPort.Port(), exposedPort.Proto())
 
-			expectedStartLog := fmt.Sprintf("Starting Stun server, listening port at %s/%s", stunPort, test.proto)
+			expectedStartLog := fmt.Sprintf("Starting Stun server, listening port at %s/%s", test.port, udpProto)
 			req := testcontainers.ContainerRequest{
 				Image:        "stun:latest",
 				ExposedPorts: []string{exposedPortRequest},
@@ -48,6 +52,7 @@ func TestConfiguration(t *testing.T) {
 					Consumers: []testcontainers.LogConsumer{&logConsumer},
 				},
 				WaitingFor: wait.ForLog(expectedStartLog),
+				Cmd:        test.cmd,
 			}
 			stunC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 				ContainerRequest: req,
@@ -69,7 +74,7 @@ func TestConfiguration(t *testing.T) {
 			}
 			serverUri := fmt.Sprintf("%s:%s", "localhost", serverPort.Port())
 
-			serverNet, severAdr, err := test.dnsResolver(test.proto, serverUri)
+			serverNet, severAdr, err := udpResolver(udpProto, serverUri)
 			if err != nil {
 				t.Errorf("failed to resolve addr: %s with error: %s", serverUri, err)
 			}
