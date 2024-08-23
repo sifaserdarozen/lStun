@@ -3,6 +3,9 @@ package stun
 import (
 	"flag"
 	"fmt"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 // default values
@@ -21,17 +24,20 @@ func (self Configuration) String() string {
 }
 
 func GetConfiguration() Configuration {
-	udpPort := flag.Int("udpPort", UDP_PORT, "Stun server udp port")
-	tcpPort := flag.Int("tcpPort", TCP_PORT, "Stun server tcp port")
+	flag.Int("udpPort", UDP_PORT, "Stun server udp port")
+	flag.Int("tcpPort", TCP_PORT, "Stun server tcp port")
 
-	flag.Parse()
+	// let viper read from flags (CLI)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
 
 	// Shall we also check environment variables for configuration?
 	// In that case it will be better to set priority to something like
-	// Arguments > Environment variables > Defaults
+	// CLI/flags > Environment variables > Configuration file > Defaults
 
 	return Configuration{
-		udpPort: *udpPort,
-		tcpPort: *tcpPort,
+		udpPort: viper.GetInt("udpPort"),
+		tcpPort: viper.GetInt("tcpPort"),
 	}
 }
