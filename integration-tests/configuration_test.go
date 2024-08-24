@@ -18,14 +18,22 @@ func TestConfiguration(t *testing.T) {
 
 	testCases := map[string]struct {
 		port string
+		env  map[string]string
 		cmd  []string
 	}{
 		"default should provide udp service at standard stun port 3478": {
 			port: stunPort,
+			env:  map[string]string{},
+			cmd:  []string{"./stun"},
+		},
+		"environments should override configuration file reads and provide udp service at 5555": {
+			port: "5555",
+			env:  map[string]string{"LSTN_UDP_PORT": "5555"},
 			cmd:  []string{"./stun"},
 		},
 		"cli flags should override all and provide udp service at 6666": {
 			port: "6666",
+			env:  map[string]string{"LSTN_UDP_PORT": "5555"},
 			cmd:  []string{"./stun", "--udpPort", "6666"},
 		},
 	}
@@ -52,6 +60,7 @@ func TestConfiguration(t *testing.T) {
 					Consumers: []testcontainers.LogConsumer{&logConsumer},
 				},
 				WaitingFor: wait.ForLog(expectedStartLog),
+				Env:        test.env,
 				Cmd:        test.cmd,
 			}
 			stunC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

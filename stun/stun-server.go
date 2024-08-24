@@ -189,14 +189,14 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 						log.Println(err)
 					}
 
-					// Write back the message over UPD
-					wlen, err := tcpConn.Write(writeBuf.Bytes())
+					// Write back the message over TCP
+					wLen, err := tcpConn.Write(writeBuf.Bytes())
 
 					if nil != err {
 						log.Println(err)
 					}
 
-					fmt.Printf("% x is writen %d is send\n", writeBuf.Bytes(), wlen)
+					fmt.Printf("% x is writen %d is send\n", writeBuf.Bytes(), wLen)
 
 					// Shut down the connection.
 					tcpConn.Close()
@@ -276,9 +276,13 @@ func UdpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 				}
 
 				// Write back the message over UPD
-				udpServer.WriteTo(writeBuf.Bytes(), rAddr)
+				wLen, err := udpServer.WriteTo(writeBuf.Bytes(), rAddr)
 
-				fmt.Printf("% x", writeBuf.Bytes())
+				if nil != err {
+					log.Println(err)
+				}
+
+				fmt.Printf("% x is writen %d is send\n", writeBuf.Bytes(), wLen)
 			}
 		}
 	}()
