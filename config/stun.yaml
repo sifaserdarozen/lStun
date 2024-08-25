@@ -1,0 +1,6 @@
+udp:
+  enabled: true
+  port: 3478
+tcp:
+  enabled: true
+  port: 3478

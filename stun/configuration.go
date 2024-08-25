@@ -44,6 +44,14 @@ func (self Configuration) String() string {
 }
 
 func GetConfiguration() (*Configuration, error) {
+	// let viper read from configuration file
+	viper.SetConfigName("stun")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/etc/stun/")
+	viper.AddConfigPath("./config/")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("Reading config file %s failed with error: %s", viper.ConfigFileUsed(), err)
+	}
 
 	// let viper set environment variables prefix and register keys to look for
 	viper.SetEnvPrefix(ENV_PREFIX)

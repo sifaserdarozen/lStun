@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"path/filepath"
 	"testing"
 
 	"github.com/docker/docker/api/types"
@@ -16,24 +17,40 @@ import (
 
 func TestConfiguration(t *testing.T) {
 
+	// check test config
+	testConfigPath, err := filepath.Abs(filepath.Join(".", "config", "stun.yaml"))
+	if err != nil {
+		t.Errorf("Test file path can not be generated with error: %s", err)
+	}
+
 	testCases := map[string]struct {
 		port string
+		file []testcontainers.ContainerFile
 		env  map[string]string
 		cmd  []string
 	}{
 		"default should provide udp service at standard stun port 3478": {
 			port: stunPort,
 			env:  map[string]string{},
+			file: []testcontainers.ContainerFile{},
+			cmd:  []string{"./stun"},
+		},
+		"configuration file should override defaults and provide udp service at 4444": {
+			port: "4444",
+			env:  map[string]string{},
+			file: []testcontainers.ContainerFile{{HostFilePath: testConfigPath, ContainerFilePath: "/stun/config/stun.yaml"}},
 			cmd:  []string{"./stun"},
 		},
 		"environments should override configuration file reads and provide udp service at 5555": {
 			port: "5555",
 			env:  map[string]string{"LSTN_UDP_PORT": "5555"},
+			file: []testcontainers.ContainerFile{{HostFilePath: testConfigPath, ContainerFilePath: "/stun/config/stun.yaml"}},
 			cmd:  []string{"./stun"},
 		},
 		"cli flags should override all and provide udp service at 6666": {
 			port: "6666",
 			env:  map[string]string{"LSTN_UDP_PORT": "5555"},
+			file: []testcontainers.ContainerFile{{HostFilePath: testConfigPath, ContainerFilePath: "/stun/config/stun.yaml"}},
 			cmd:  []string{"./stun", "--udp-port", "6666"},
 		},
 	}
@@ -61,6 +78,7 @@ func TestConfiguration(t *testing.T) {
 				},
 				WaitingFor: wait.ForLog(expectedStartLog),
 				Env:        test.env,
+				Files:      test.file,
 				Cmd:        test.cmd,
 			}
 			stunC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

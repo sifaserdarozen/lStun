@@ -1,0 +1,6 @@
+udp:
+  enabled: true
+  port: 4444
+tcp:
+  enabled: true
+  port: 4444
