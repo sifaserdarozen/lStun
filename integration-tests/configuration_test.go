@@ -34,7 +34,7 @@ func TestConfiguration(t *testing.T) {
 		"cli flags should override all and provide udp service at 6666": {
 			port: "6666",
 			env:  map[string]string{"LSTN_UDP_PORT": "5555"},
-			cmd:  []string{"./stun", "--udpPort", "6666"},
+			cmd:  []string{"./stun", "--udp-port", "6666"},
 		},
 	}
 

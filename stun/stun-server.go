@@ -92,7 +92,7 @@ type SuccessBindingResponse struct {
 // context
 // https://medium.com/@jamal.kaksouri/the-complete-guide-to-context-in-golang-efficient-concurrency-management-43d722f6eaea
 
-func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
+func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 	(*wg).Add(1)
 	go func() {
 		defer (*wg).Done()
@@ -100,8 +100,8 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 		tcpWg := &sync.WaitGroup{}
 		newConns := make(chan net.Conn, NEW_CONN_BUFF_SIZE)
 
-		log.Printf("Starting Stun server, listening port at %d/tcp", conf.tcpPort)
-		listenTcpUrl := fmt.Sprintf(":%d", conf.tcpPort)
+		log.Printf("Starting Stun server, listening port at %d/tcp", conf.Port)
+		listenTcpUrl := fmt.Sprintf(":%d", conf.Port)
 		tcpServer, err := net.Listen("tcp", listenTcpUrl)
 		if err != nil {
 			log.Fatal(err)
@@ -212,13 +212,13 @@ func TcpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
 	}()
 }
 
-func UdpStart(ctx context.Context, conf Configuration, wg *sync.WaitGroup) {
+func UdpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 	(*wg).Add(1)
 	go func() {
 		defer (*wg).Done()
 
-		log.Printf("Starting Stun server, listening port at %d/udp", conf.udpPort)
-		listenUrl := fmt.Sprintf(":%d", conf.udpPort)
+		log.Printf("Starting Stun server, listening port at %d/udp", conf.Port)
+		listenUrl := fmt.Sprintf(":%d", conf.Port)
 		udpServer, err := net.ListenPacket("udp", listenUrl)
 		if err != nil {
 			log.Fatal(err)

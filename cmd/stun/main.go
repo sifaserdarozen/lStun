@@ -10,8 +10,10 @@ import (
 
 func main() {
 	// read configuration
-	conf := stun.GetConfiguration()
-	log.Println(conf)
+	conf, err := stun.GetConfiguration()
+	if nil != err {
+		log.Fatalf("Configuration readup failed with error: %s", err)
+	}
 
 	// sync helpers
 	ctx := context.Background()

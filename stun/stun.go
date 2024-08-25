@@ -20,8 +20,8 @@ func getItfcs() {
 	}
 }
 
-func Start(conf Configuration, ctx context.Context, wg *sync.WaitGroup) {
+func Start(conf *Configuration, ctx context.Context, wg *sync.WaitGroup) {
 	getItfcs()
-	UdpStart(ctx, conf, wg)
-	TcpStart(ctx, conf, wg)
+	UdpStart(ctx, conf.Udp, wg)
+	TcpStart(ctx, conf.Tcp, wg)
 }

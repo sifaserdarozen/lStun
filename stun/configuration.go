@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -11,11 +12,11 @@ import (
 
 // viper keys
 const (
-	ENV_PREFIX   = "LSTN"
-	ENV_UDP_PORT = "LSTN_UDP_PORT"
-	ENV_TCP_PORT = "LSTN_TCP_PORT"
-	UDP_PORT     = "udpPort"
-	TCP_PORT     = "tcpPort"
+	ENV_PREFIX    = "LSTN"
+	KEY_UDP_PORT  = "udp.port"
+	KEY_TCP_PORT  = "tcp.port"
+	FLAG_UDP_PORT = "udp-port"
+	FLAG_TCP_PORT = "tcp-port"
 )
 
 // default values
@@ -24,41 +25,65 @@ const (
 	DEFAULT_TCP_PORT = 3478
 )
 
+type ServerConf struct {
+	Enabled bool
+	Port    int
+}
+
+func (self ServerConf) String() string {
+	return fmt.Sprintf("{enabled: %t, Port: %d}", self.Enabled, self.Port)
+}
+
 type Configuration struct {
-	udpPort int
-	tcpPort int
+	Udp ServerConf
+	Tcp ServerConf
 }
 
 func (self Configuration) String() string {
-	return fmt.Sprintf("{Udp Port: %d, Tcp Port: %d}", self.udpPort, self.tcpPort)
+	return fmt.Sprintf("{Udp: %s, Tcp: %s}", self.Udp.String(), self.Tcp.String())
 }
 
-func GetConfiguration() Configuration {
+func GetConfiguration() (*Configuration, error) {
+
 	// let viper set environment variables prefix and register keys to look for
 	viper.SetEnvPrefix(ENV_PREFIX)
-	err := viper.BindEnv(UDP_PORT, ENV_UDP_PORT)
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	err := viper.BindEnv(KEY_UDP_PORT)
 	if nil != err {
-		log.Printf("Env get failed for %s with error %s", ENV_UDP_PORT, err)
+		log.Printf("Bind env failed for key %s with error: %s", KEY_UDP_PORT, err)
 	}
-	err = viper.BindEnv(TCP_PORT, ENV_TCP_PORT)
+	err = viper.BindEnv(KEY_TCP_PORT)
 	if nil != err {
-		log.Printf("Env get failed for %s with error: %s", ENV_TCP_PORT, err)
+		log.Printf("Bind env failed for key %s with error: %s", KEY_TCP_PORT, err)
 	}
 
 	// use golang flag to get cli argumenst
-	flag.Int(UDP_PORT, DEFAULT_UDP_PORT, "Stun server udp port")
-	flag.Int(TCP_PORT, DEFAULT_TCP_PORT, "Stun server tcp port")
+	flag.Int(FLAG_UDP_PORT, DEFAULT_UDP_PORT, "Stun server udp port")
+	flag.Int(FLAG_TCP_PORT, DEFAULT_TCP_PORT, "Stun server tcp port")
 
-	// let viper read from flags (CLI)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
-	err = viper.BindPFlags(pflag.CommandLine)
+
+	// let viper read from flags (CLI)
+	err = viper.BindPFlag(KEY_UDP_PORT, pflag.Lookup(FLAG_UDP_PORT))
 	if nil != err {
-		log.Printf("Binfing flags failed with error: %s", err)
+		log.Printf("Bind flag failed for key %s with error: %s", KEY_UDP_PORT, err)
+	}
+	err = viper.BindPFlag(KEY_TCP_PORT, pflag.Lookup(FLAG_TCP_PORT))
+	if nil != err {
+		log.Printf("Bind flag failed for key %s with error: %s", KEY_TCP_PORT, err)
 	}
 
-	return Configuration{
-		udpPort: viper.GetInt(UDP_PORT),
-		tcpPort: viper.GetInt(TCP_PORT),
+	config := Configuration{}
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		log.Printf("Error in unmarshalling configuration, %s", err)
+		return nil, err
 	}
+
+	log.Println("Using configuration...")
+	log.Println(config)
+
+	return &config, nil
 }
