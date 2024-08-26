@@ -171,7 +171,7 @@ func TestWithPion(t *testing.T) {
 				// Decoding XOR-MAPPED-ADDRESS attribute from message.
 				var xorMappedAddr stun.XORMappedAddress
 				if err := response.Parse(&xorMappedAddr); err != nil {
-					t.Logf("Failed to parse xor mapped address (OPTIONAL): %s", err)
+					t.Errorf("Failed to parse xor mapped address: %s", err)
 				}
 
 				// Decoding MAPPED-ADDdnetworkRESS attribute from message.
@@ -185,6 +185,10 @@ func TestWithPion(t *testing.T) {
 
 				if expectedMappedIp != mappedAddr.IP.String() {
 					t.Errorf("expected ip = %s != %s = mapped ip", expectedMappedIp, mappedAddr)
+				}
+
+				if expectedMappedIp != xorMappedAddr.IP.String() {
+					t.Errorf("expected ip = %s != %s = mapped ip", expectedMappedIp, xorMappedAddr)
 				}
 			}); err != nil {
 				t.Errorf("Error in stun request %s", err)

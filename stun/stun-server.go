@@ -79,9 +79,28 @@ func NewMappedAddress(port uint16, ip net.IP) (MappedAddress, error) {
 	return MappedAddress{}, errors.New("Not an Ipv4 address")
 }
 
+func NewXoredAddress(port uint16, ip net.IP, cookie uint32) (XoredAddress, error) {
+	if ip4 := ip.To4(); ip4 != nil {
+		return XoredAddress{
+			Header: Attribute{
+				Type: XOR_MAPPED_ADDRESS,
+				Len:  8,
+			},
+			Addr: AttributeAddress{
+				AddrType: IPV4_ATTR,
+				Port:     port ^ uint16(cookie>>16),
+				Addr:     binary.BigEndian.Uint32(ip4) ^ cookie,
+			},
+		}, nil
+	}
+
+	return XoredAddress{}, errors.New("Not an Ipv4 address")
+}
+
 type SuccessBindingResponse struct {
 	BindRequest
 	MappedAddress
+	XoredAddress
 }
 
 func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
@@ -171,8 +190,9 @@ func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 					var res SuccessBindingResponse
 					res.BindRequest = req
 					res.BindRequest.Type = BINDING_SUCCESS_RESPONSE
-					res.BindRequest.Len = 12
+					res.BindRequest.Len = 12 + 12
 					res.MappedAddress, _ = NewMappedAddress(uint16(port), addrInTcp.IP)
+					res.XoredAddress, _ = NewXoredAddress(uint16(port), addrInTcp.IP, req.Cookie)
 					fmt.Println(res.BindRequest)
 
 					writeBuf := new(bytes.Buffer)
@@ -256,8 +276,9 @@ func UdpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 				var res SuccessBindingResponse
 				res.BindRequest = req
 				res.BindRequest.Type = BINDING_SUCCESS_RESPONSE
-				res.BindRequest.Len = 12
+				res.BindRequest.Len = 12 + 12
 				res.MappedAddress, _ = NewMappedAddress(uint16(port), addrInUdp.IP)
+				res.XoredAddress, _ = NewXoredAddress(uint16(port), addrInUdp.IP, req.Cookie)
 				fmt.Println(res.BindRequest)
 
 				writeBuf := new(bytes.Buffer)
