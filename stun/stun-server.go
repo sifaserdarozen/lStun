@@ -37,7 +37,6 @@ type BindRequest struct {
 }
 
 func (self BindRequest) String() string {
-	// return fmt.Sprintf("{type: % length: %d}", self.Type, self.Len, self.Cookie, self.ID)
 	return fmt.Sprintf("{type: %#04x, length: %d, Cookie: %#04x, ID: %s}", self.Type, self.Len, self.Cookie, hex.EncodeToString(self.ID[:]))
 }
 
@@ -84,13 +83,6 @@ type SuccessBindingResponse struct {
 	BindRequest
 	MappedAddress
 }
-
-// a server implementation
-// https://eli.thegreenplace.net/2020/graceful-shutdown-of-a-tcp-server-in-go/
-// canceling the code
-// https://stackoverflow.com/questions/66755407/cancelling-a-net-listener-via-context-in-golang
-// context
-// https://medium.com/@jamal.kaksouri/the-complete-guide-to-context-in-golang-efficient-concurrency-management-43d722f6eaea
 
 func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 	(*wg).Add(1)
@@ -247,7 +239,6 @@ func UdpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 				}
 
 				addrInUdp := rAddr.(*net.UDPAddr)
-				// ipAddr := addrInUdp.AddrPort().Addr()
 				port := addrInUdp.Port
 
 				if rlen < MIN_STUN_LEN {
