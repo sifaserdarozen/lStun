@@ -10,7 +10,7 @@ var testCases = map[string]struct {
 	IPv4             net.IP
 	mappedAddress    MappedAddress
 	cookie           uint32
-	xorMappedAddress XoredAddress
+	xorMappedAddress XorMappedAddress
 }{
 	"172.17.0.1:47746": {
 		port: 47746,
@@ -27,7 +27,7 @@ var testCases = map[string]struct {
 			},
 		},
 		cookie: 0x2112a442,
-		xorMappedAddress: XoredAddress{
+		xorMappedAddress: XorMappedAddress{
 			Header: Attribute{
 				Type: XOR_MAPPED_ADDRESS,
 				Len:  8,
@@ -54,7 +54,7 @@ var testCases = map[string]struct {
 			},
 		},
 		cookie: 0x2112a442,
-		xorMappedAddress: XoredAddress{
+		xorMappedAddress: XorMappedAddress{
 			Header: Attribute{
 				Type: XOR_MAPPED_ADDRESS,
 				Len:  8,
@@ -86,14 +86,14 @@ func TestMappedAddress(t *testing.T) {
 	}
 }
 
-func TestXoredAddress(t *testing.T) {
+func TestXorMappedAddress(t *testing.T) {
 
 	for name, test := range testCases {
 		// test := test // NOTE: uncomment for Go < 1.22, see /doc/faq#closures_and_goroutines
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			xorMappedAddress, err := NewXoredAddress(test.port, test.IPv4, test.cookie)
+			xorMappedAddress, err := NewXorMappedAddress(test.port, test.IPv4, test.cookie)
 
 			if nil != err {
 				t.Errorf("Could not create xor mapped address with error: %s", err)

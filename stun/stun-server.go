@@ -51,7 +51,7 @@ type AttributeAddress struct {
 	Addr     uint32
 }
 
-type XoredAddress struct {
+type XorMappedAddress struct {
 	Header Attribute
 	Addr   AttributeAddress
 }
@@ -79,9 +79,9 @@ func NewMappedAddress(port uint16, ip net.IP) (MappedAddress, error) {
 	return MappedAddress{}, errors.New("Not an Ipv4 address")
 }
 
-func NewXoredAddress(port uint16, ip net.IP, cookie uint32) (XoredAddress, error) {
+func NewXorMappedAddress(port uint16, ip net.IP, cookie uint32) (XorMappedAddress, error) {
 	if ip4 := ip.To4(); ip4 != nil {
-		return XoredAddress{
+		return XorMappedAddress{
 			Header: Attribute{
 				Type: XOR_MAPPED_ADDRESS,
 				Len:  8,
@@ -94,13 +94,13 @@ func NewXoredAddress(port uint16, ip net.IP, cookie uint32) (XoredAddress, error
 		}, nil
 	}
 
-	return XoredAddress{}, errors.New("Not an Ipv4 address")
+	return XorMappedAddress{}, errors.New("Not an Ipv4 address")
 }
 
 type SuccessBindingResponse struct {
 	BindRequest
 	MappedAddress
-	XoredAddress
+	XorMappedAddress
 }
 
 func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
@@ -192,7 +192,7 @@ func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 					res.BindRequest.Type = BINDING_SUCCESS_RESPONSE
 					res.BindRequest.Len = 12 + 12
 					res.MappedAddress, _ = NewMappedAddress(uint16(port), addrInTcp.IP)
-					res.XoredAddress, _ = NewXoredAddress(uint16(port), addrInTcp.IP, req.Cookie)
+					res.XorMappedAddress, _ = NewXorMappedAddress(uint16(port), addrInTcp.IP, req.Cookie)
 					fmt.Println(res.BindRequest)
 
 					writeBuf := new(bytes.Buffer)
@@ -278,7 +278,7 @@ func UdpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 				res.BindRequest.Type = BINDING_SUCCESS_RESPONSE
 				res.BindRequest.Len = 12 + 12
 				res.MappedAddress, _ = NewMappedAddress(uint16(port), addrInUdp.IP)
-				res.XoredAddress, _ = NewXoredAddress(uint16(port), addrInUdp.IP, req.Cookie)
+				res.XorMappedAddress, _ = NewXorMappedAddress(uint16(port), addrInUdp.IP, req.Cookie)
 				fmt.Println(res.BindRequest)
 
 				writeBuf := new(bytes.Buffer)
