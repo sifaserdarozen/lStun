@@ -4,3 +4,6 @@ udp:
 tcp:
   enabled: true
   port: 4444
+monitoring:
+  port: 8081
+  path: "/metrics"

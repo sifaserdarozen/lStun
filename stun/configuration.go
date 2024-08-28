@@ -12,17 +12,21 @@ import (
 
 // viper keys
 const (
-	ENV_PREFIX    = "LSTN"
-	KEY_UDP_PORT  = "udp.port"
-	KEY_TCP_PORT  = "tcp.port"
-	FLAG_UDP_PORT = "udp-port"
-	FLAG_TCP_PORT = "tcp-port"
+	ENV_PREFIX          = "LSTN"
+	KEY_UDP_PORT        = "udp.port"
+	KEY_TCP_PORT        = "tcp.port"
+	KEY_MONITORING_PORT = "monitoring.port"
+	KEY_MONITORING_PATH = "monitoring.path"
+	FLAG_UDP_PORT       = "udp-port"
+	FLAG_TCP_PORT       = "tcp-port"
 )
 
 // default values
 const (
-	DEFAULT_UDP_PORT = 3478
-	DEFAULT_TCP_PORT = 3478
+	DEFAULT_UDP_PORT        = 3478
+	DEFAULT_TCP_PORT        = 3478
+	DEFAULT_MONITORING_PORT = 8081
+	DEFAULT_MONITORING_PATH = "/metrics"
 )
 
 type ServerConf struct {
@@ -34,13 +38,23 @@ func (self ServerConf) String() string {
 	return fmt.Sprintf("{enabled: %t, Port: %d}", self.Enabled, self.Port)
 }
 
+type MonitoringConf struct {
+	Port int
+	Path string
+}
+
+func (self MonitoringConf) String() string {
+	return fmt.Sprintf("{Port: %d, Path: %s}", self.Port, self.Path)
+}
+
 type Configuration struct {
-	Udp ServerConf
-	Tcp ServerConf
+	Udp        ServerConf
+	Tcp        ServerConf
+	Monitoring MonitoringConf
 }
 
 func (self Configuration) String() string {
-	return fmt.Sprintf("{Udp: %s, Tcp: %s}", self.Udp.String(), self.Tcp.String())
+	return fmt.Sprintf("{Udp: %s, Tcp: %s Monitoring: %s}", self.Udp.String(), self.Tcp.String(), self.Monitoring.String())
 }
 
 func GetConfiguration() (*Configuration, error) {
@@ -65,6 +79,17 @@ func GetConfiguration() (*Configuration, error) {
 	if nil != err {
 		log.Printf("Bind env failed for key %s with error: %s", KEY_TCP_PORT, err)
 	}
+	err = viper.BindEnv(KEY_MONITORING_PORT)
+	if nil != err {
+		log.Printf("Bind env failed for key %s with error: %s", KEY_MONITORING_PORT, err)
+	}
+	err = viper.BindEnv(KEY_MONITORING_PATH)
+	if nil != err {
+		log.Printf("Bind env failed for key %s with error: %s", KEY_MONITORING_PATH, err)
+	}
+
+	viper.SetDefault(KEY_MONITORING_PORT, DEFAULT_MONITORING_PORT)
+	viper.SetDefault(KEY_MONITORING_PATH, DEFAULT_MONITORING_PATH)
 
 	// use golang flag to get cli argumenst
 	flag.Int(FLAG_UDP_PORT, DEFAULT_UDP_PORT, "Stun server udp port")
