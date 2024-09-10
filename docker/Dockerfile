@@ -1,5 +1,5 @@
 FROM alpine:3.20.0 AS build
-RUN apk update && apk add --no-cache make go
+RUN apk update && apk add --no-cache make go git
 WORKDIR /stun/
 COPY . /stun
 RUN ["make", "build"]
