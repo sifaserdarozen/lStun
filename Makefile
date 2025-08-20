@@ -1,5 +1,5 @@
 
-.PHONY: build test fmt docker-build docker-run clean
+.PHONY: build test fmt docker-build docker-run generate clean
 
 VERSION:=$(shell git rev-parse --short HEAD 2>/dev/null)
 BUILD_DATE:=$(shell date +%Y-%m-%dT%H:%M:%S)
@@ -24,6 +24,9 @@ docker-build:
 
 docker-run: docker-build
 	docker run -p 3478:3478/udp stun:latest ./stun
+
+generate:
+	go generate ./...
 
 clean:
 	rm -rf ./bin/*
