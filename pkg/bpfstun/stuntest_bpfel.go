@@ -54,6 +54,7 @@ type stuntestSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type stuntestProgramSpecs struct {
+	Ingress *ebpf.ProgramSpec `ebpf:"ingress"`
 }
 
 // stuntestMapSpecs contains maps before they are loaded into the kernel.
@@ -104,10 +105,13 @@ type stuntestVariables struct {
 //
 // It can be passed to loadStuntestObjects or ebpf.CollectionSpec.LoadAndAssign.
 type stuntestPrograms struct {
+	Ingress *ebpf.Program `ebpf:"ingress"`
 }
 
 func (p *stuntestPrograms) Close() error {
-	return _StuntestClose()
+	return _StuntestClose(
+		p.Ingress,
+	)
 }
 
 func _StuntestClose(closers ...io.Closer) error {

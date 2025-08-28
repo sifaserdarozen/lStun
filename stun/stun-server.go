@@ -12,6 +12,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/sifaserdarozen/stun/pkg/bpfstun"
 )
 
 const (
@@ -36,8 +38,8 @@ type BindRequest struct {
 	ID     [ID_LEN]byte
 }
 
-func (self BindRequest) String() string {
-	return fmt.Sprintf("{type: %#04x, length: %d, Cookie: %#04x, ID: %s}", self.Type, self.Len, self.Cookie, hex.EncodeToString(self.ID[:]))
+func (br BindRequest) String() string {
+	return fmt.Sprintf("{type: %#04x, length: %d, Cookie: %#04x, ID: %s}", br.Type, br.Len, br.Cookie, hex.EncodeToString(br.ID[:]))
 }
 
 type Attribute struct {
@@ -76,7 +78,7 @@ func NewMappedAddress(port uint16, ip net.IP) (MappedAddress, error) {
 		}, nil
 	}
 
-	return MappedAddress{}, errors.New("Not an Ipv4 address")
+	return MappedAddress{}, errors.New("not an Ipv4 address")
 }
 
 func NewXorMappedAddress(port uint16, ip net.IP, cookie uint32) (XorMappedAddress, error) {
@@ -94,7 +96,7 @@ func NewXorMappedAddress(port uint16, ip net.IP, cookie uint32) (XorMappedAddres
 		}, nil
 	}
 
-	return XorMappedAddress{}, errors.New("Not an Ipv4 address")
+	return XorMappedAddress{}, errors.New("not an Ipv4 address")
 }
 
 type SuccessBindingResponse struct {
@@ -118,7 +120,9 @@ func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 			log.Fatal(err)
 		}
 
-		defer tcpServer.Close()
+		defer func() {
+			_ = tcpServer.Close()
+		}()
 
 		// Make listen connections
 		tcpWg.Add(1)
@@ -143,7 +147,7 @@ func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 			select {
 			case <-ctx.Done():
 				log.Println("Stopping tcp server ...")
-				tcpServer.Close()
+				_ = tcpServer.Close()
 				break loop
 			case conn := <-newConns:
 				if nil == conn {
@@ -189,8 +193,8 @@ func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 
 					var res SuccessBindingResponse
 					res.BindRequest = req
-					res.BindRequest.Type = BINDING_SUCCESS_RESPONSE
-					res.BindRequest.Len = 12 + 12
+					res.Type = BINDING_SUCCESS_RESPONSE
+					res.Len = 12 + 12
 					res.MappedAddress, _ = NewMappedAddress(uint16(port), addrInTcp.IP)
 					res.XorMappedAddress, _ = NewXorMappedAddress(uint16(port), addrInTcp.IP, req.Cookie)
 					fmt.Println(res.BindRequest)
@@ -211,7 +215,7 @@ func TcpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 					fmt.Printf("% x is writen %d is send\n", writeBuf.Bytes(), wLen)
 
 					// Shut down the connection.
-					tcpConn.Close()
+					_ = tcpConn.Close()
 
 				}(conn, tcpWg)
 			}
@@ -236,7 +240,9 @@ func UdpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 			log.Fatal(err)
 		}
 
-		defer udpServer.Close()
+		defer func() {
+			_ = udpServer.Close()
+		}()
 
 		for {
 			select {
@@ -275,8 +281,8 @@ func UdpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 
 				var res SuccessBindingResponse
 				res.BindRequest = req
-				res.BindRequest.Type = BINDING_SUCCESS_RESPONSE
-				res.BindRequest.Len = 12 + 12
+				res.Type = BINDING_SUCCESS_RESPONSE
+				res.Len = 12 + 12
 				res.MappedAddress, _ = NewMappedAddress(uint16(port), addrInUdp.IP)
 				res.XorMappedAddress, _ = NewXorMappedAddress(uint16(port), addrInUdp.IP, req.Cookie)
 				fmt.Println(res.BindRequest)
@@ -297,5 +303,21 @@ func UdpStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
 				fmt.Printf("% x is writen %d is send\n", writeBuf.Bytes(), wLen)
 			}
 		}
+	}()
+}
+
+func BpfStart(ctx context.Context, conf ServerConf, wg *sync.WaitGroup) {
+	(*wg).Add(1)
+	go func() {
+		defer (*wg).Done()
+
+		log.Printf("Starting BGP server, listening port at %d/udp", conf.Port)
+
+		bpfServer := bpfstun.BpfStun{}
+		bpfServer.Start()
+		defer bpfServer.Stop()
+
+		<-ctx.Done()
+		log.Println("Stopping bgp server ...")
 	}()
 }

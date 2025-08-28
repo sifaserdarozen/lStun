@@ -34,8 +34,8 @@ type ServerConf struct {
 	Port    int
 }
 
-func (self ServerConf) String() string {
-	return fmt.Sprintf("{enabled: %t, Port: %d}", self.Enabled, self.Port)
+func (sc ServerConf) String() string {
+	return fmt.Sprintf("{enabled: %t, Port: %d}", sc.Enabled, sc.Port)
 }
 
 type MonitoringConf struct {
@@ -43,8 +43,8 @@ type MonitoringConf struct {
 	Path string
 }
 
-func (self MonitoringConf) String() string {
-	return fmt.Sprintf("{Port: %d, Path: %s}", self.Port, self.Path)
+func (sc MonitoringConf) String() string {
+	return fmt.Sprintf("{Port: %d, Path: %s}", sc.Port, sc.Path)
 }
 
 type Configuration struct {
@@ -53,8 +53,8 @@ type Configuration struct {
 	Monitoring MonitoringConf
 }
 
-func (self Configuration) String() string {
-	return fmt.Sprintf("{Udp: %s, Tcp: %s Monitoring: %s}", self.Udp.String(), self.Tcp.String(), self.Monitoring.String())
+func (sc Configuration) String() string {
+	return fmt.Sprintf("{Udp: %s, Tcp: %s Monitoring: %s}", sc.Udp.String(), sc.Tcp.String(), sc.Monitoring.String())
 }
 
 func GetConfiguration() (*Configuration, error) {

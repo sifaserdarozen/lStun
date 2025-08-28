@@ -10,4 +10,5 @@ func Start(conf *Configuration, ctx context.Context, wg *sync.WaitGroup) {
 	MonitoringStart(ctx, conf.Monitoring, wg)
 	UdpStart(ctx, conf.Udp, wg)
 	TcpStart(ctx, conf.Tcp, wg)
+	BpfStart(ctx, conf.Tcp, wg)
 }
